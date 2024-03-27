@@ -1,0 +1,26 @@
+# Establecer la ruta de la OU
+$OU_DN = OU=Departamento,OU=Usuarios,DC=dominio,DC=local"
+
+# Definir los campos que deseas extraer
+$campos = "sAMAccountName", "DisplayName", "extensionAttibute9s"
+
+# Obtener los usuarios de la OU que no están dados de baja
+$usuarios = Get-ADUser -Filter * -SearchBase "$OU_DN" -SearchScope OneLevel -Properties * | Where-Object { $_.Enabled -eq $true }
+
+# Crear un array para almacenar los datos de los usuarios
+$datosUsuarios = @()
+
+# Recorrer los usuarios y guardar los campos especificados en el array
+foreach ($usuario in $usuarios) {
+    $usuarioInfo = New-Object -TypeName PSObject
+    foreach ($campo in $campos) {
+        $usuarioInfo | Add-Member -MemberType NoteProperty -Name $campo -Value $usuario.$campo
+    }
+    $datosUsuarios += $usuarioInfo
+
+    # Mostrar mensaje de texto para cada usuario exportado
+    Write-Host "Usuario exportado: $($usuario.DisplayName)"
+}
+
+# Exportar los datos a un archivo CSV
+$datosUsuarios | Export-Csv -Path "Archivo.csv" -NoTypeInformation
